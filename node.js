@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人计时器</title>
+    <style>
+        /* 消除浏览器默认边距 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000; /* 纯黑背景 */
+            display: flex;
+            flex-direction: column;    /* 改为垂直排列，方便放按钮 */
+            justify-content: center; /* 水平居中 */
+            align-items: center;    /* 垂直居中 */
+            font-family: 'Courier New', Courier, monospace; /* 等宽字体，防止数字跳动 */
+            overflow: hidden;       /* 隐藏滚动条 */
+        }
+
+        /* 计时器文字样式 */
+        .timer-display {
+            font-size: 6rem;        /* 字体大小，可根据喜好调整 */
+            color: #ffffff;         /* 纯白文字 */
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); /* 淡淡的发光效果 */
+            letter-spacing: 2px;
+            margin-bottom: 2rem;    /* 与下方按钮留出间距 */
+        }
+
+        /* 控制按钮容器 */
+        .controls {
+            display: flex;
+            gap: 20px;              /* 按钮之间的间距 */
+        }
+
+        /* 统一按钮样式 */
+        .btn {
+            background: transparent;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            padding: 10px 24px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        /* 按钮悬停效果 */
+        .btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        /* 专属停止状态样式（可选，让停止按钮带点警示感） */
+        .btn.running {
+            border-color: #ff4d4d;
+            color: #ff4d4d;
+        }
+        .btn.running:hover {
+            background: #ff4d4d;
+            color: #ffffff;
+        }
+
+        /* 手机端自适应缩小字体 */
+        @media (max-width: 600px) {
+            .timer-display {
+                font-size: 3.5rem;
+            }
+            .btn {
+                padding: 8px 18px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="timer" class="timer-display">00:00:00</div>
+
+    <div class="controls">
+        <button id="startStopBtn" class="btn">开始</button>
+        <button id="resetBtn" class="btn">重置</button>
+    </div>
+
+    <script>
+        let timerInterval = null;
+        let startTime = 0;
+        let accumulatedTime = 0; // 核心：记录已经累积过去的毫秒数
+        let isRunning = false;
+
+        const timerDisplay = document.getElementById('timer');
+        const startStopBtn = document.getElementById('startStopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function updateTimer() {
+            // 当前总时间 = 之前累积的时间 + (当前时间 - 本次开始时间)
+            const elapsedTime = accumulatedTime + (Date.now() - startTime);
+
+            // 换算为时、分、秒
+            const totalSeconds = Math.floor(elapsedTime / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            // 格式化输出
+            const formatHours = String(hours).padStart(2, '0');
+            const formatMinutes = String(minutes).padStart(2, '0');
+            const formatSeconds = String(seconds).padStart(2, '0');
+
+            timerDisplay.textContent = `${formatHours}:${formatMinutes}:${formatSeconds}`;
+        }
+
+        // 开始 / 停止逻辑
+        function toggleTimer() {
+            if (!isRunning) {
+                // 启动
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 100); // 提高到100ms刷新一次，反应更灵敏
+                startStopBtn.textContent = '停止';
+                startStopBtn.classList.add('running');
+                isRunning = true;
+            } else {
+                // 暂停
+                clearInterval(timerInterval);
+                // 暂停那一刻，把这一次跑的时间累加到总时间里
+                accumulatedTime += Date.now() - startTime;
+                startStopBtn.textContent = '开始';
+                startStopBtn.classList.remove('running');
+                isRunning = false;
+            }
+        }
+
+        // 重置逻辑
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            startTime = 0;
+            accumulatedTime = 0;
+            isRunning = false;
+            
+            timerDisplay.textContent = '00:00:00';
+            startStopBtn.textContent = '开始';
+            startStopBtn.classList.remove('running');
+        }
+
+        // 绑定点击事件
+        startStopBtn.addEventListener('click', toggleTimer);
+        resetBtn.addEventListener('click', resetTimer);
+    </script>
+</body>
+</html>
